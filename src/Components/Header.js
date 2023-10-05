@@ -138,7 +138,7 @@ function ResponsiveDrawer(props) {
 
 
     </Box>
-    <img src={img} alt='wave'   style={{marginTop:-50}} />
+    
     </>
   );
 }
