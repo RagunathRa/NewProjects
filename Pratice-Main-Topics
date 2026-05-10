@@ -1,0 +1,60 @@
+1. In your PIVIX project, policyId is a prop. When it changes, you need to fetch fresh policy details from an API. Which hook do you use, how do you write it, and how do you prevent a memory leak if the component unmounts before the response comes back?
+
+I would use useEffect because API calls are side effects in React.
+
+The effect depends on policyId, so whenever policyId changes, the API is called again to fetch fresh policy details.
+
+To prevent memory leaks if the component unmounts before the API response returns, I use AbortController inside the cleanup function to cancel the pending request.
+
+
+| Requirement            | Answer                                                  |
+| ---------------------- | ------------------------------------------------------- |
+| Which hook to use?     | `useEffect`                                             |
+| Why use it?            | Because API fetching is a side effect                   |
+| Dependency             | `policyId`                                              |
+| Trigger                | Runs whenever `policyId` changes                        |
+| Memory Leak Prevention | Cleanup function with `AbortController` or mounted flag |
+| Best Practice          | Cancel API request on component unmount                 |
+
+import { useEffect, useState } from "react";
+
+function PolicyDetails({ policyId }) {
+  const [policy, setPolicy] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchPolicyDetails = async () => {
+      try {
+        const response = await fetch(
+          `/api/policies/${policyId}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        const data = await response.json();
+        setPolicy(data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("API Error:", error);
+        }
+      }
+    };
+
+    if (policyId) {
+      fetchPolicyDetails();
+    }
+
+    // Cleanup function
+    return () => {
+      controller.abort();
+    };
+  }, [policyId]);
+
+  return (
+    <div>
+      {policy ? policy.name : "Loading..."}
+    </div>
+  );
+}
